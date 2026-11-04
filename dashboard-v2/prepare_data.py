@@ -52,8 +52,8 @@ SELECT product_id, any_value(product) AS product, any_value(brand) AS brand,
  sum(COALESCE(helpful_votes,0)) AS helpful_votes,
  count(*) FILTER(WHERE rating<=2 AND issue<>'Other') AS tagged_negative_reviews,
  mode() WITHIN GROUP(ORDER BY issue) FILTER(WHERE rating<=2) AS main_issue,
- avg(rating) FILTER(WHERE year(review_time_utc)=2023) AS rating_2023,
- avg(rating) FILTER(WHERE year(review_time_utc)=2022) AS rating_2022
+ avg(rating) FILTER(WHERE year(CAST(review_time_utc AS TIMESTAMP))=2023) AS rating_2023,
+ avg(rating) FILTER(WHERE year(CAST(review_time_utc AS TIMESTAMP))=2022) AS rating_2022
 FROM tagged GROUP BY product_id ORDER BY review_count DESC
 """).fetchdf()
 
@@ -70,7 +70,7 @@ def clean(records):
 
 product_records=clean(products.to_dict(orient="records"))
 yearly=clean(con.execute("""
-SELECT year(review_time_utc) AS year,count(*) AS reviews,avg(rating_valid) AS avg_rating,
+SELECT year(CAST(review_time_utc AS TIMESTAMP)) AS year,count(*) AS reviews,avg(rating_valid) AS avg_rating,
  count(*) FILTER(WHERE rating_valid<=2)::DOUBLE/count(*) AS negative_rate
 FROM reviews WHERE rating_valid BETWEEN 1 AND 5 AND review_time_utc IS NOT NULL
 GROUP BY 1 ORDER BY 1
